@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shopping_list/data_layer/data/dummy_items.dart';
+import 'package:shopping_list/data_layer/models/grocery_item_model.dart';
 import 'package:shopping_list/presentation_layer/widgets/new_item.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -12,13 +12,24 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
+  final List<GroceryItem> _groceryItems = [];
   void _addItem() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const NewItem(),
+        builder: (context) =>  NewItem(addNewItem:addGrocery ,),
       ),
     );
+  }
+
+  void addGrocery(GroceryItem grocery) {
+    setState(() {
+      
+    _groceryItems.add(grocery);
+    });
+  }
+  void removeGrocery(GroceryItem grocery) {
+    _groceryItems.remove(grocery);
   }
 
   @override
@@ -35,7 +46,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           toolbarHeight: 85,
         ),
         body: ListView.builder(
-          itemCount: groceryItems.length,
+          itemCount: _groceryItems.length,
           itemBuilder: (context, index) {
             return ListTile(
               subtitle: const Divider(
@@ -44,11 +55,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               leading: Container(
                 width: 20,
                 height: 20,
-                color: groceryItems[index].category.categoryColor,
+                color: _groceryItems[index].category.categoryColor,
               ),
-              title: Text(groceryItems[index].name),
+              title: Text(_groceryItems[index].name),
               trailing: Text(
-                groceryItems[index].quantity.toString(),
+                _groceryItems[index].quantity.toString(),
                 style: const TextStyle(
                   fontSize: 16,
                 ),
