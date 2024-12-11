@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data_layer/data/categories.dart';
 import 'package:shopping_list/data_layer/models/category_model.dart';
-import 'package:shopping_list/data_layer/models/grocery_item_model.dart';
+import 'package:http/http.dart' as http;
 
 extension ContextExtension on BuildContext {
   double get height => MediaQuery.sizeOf(this).height;
@@ -9,9 +11,9 @@ extension ContextExtension on BuildContext {
 }
 
 class NewItem extends StatefulWidget {
-  const NewItem({super.key, required this.addNewItem});
+  const NewItem({super.key});
 
-  final Function(GroceryItem grocery) addNewItem;
+  
 
   @override
   State<NewItem> createState() {
@@ -26,20 +28,31 @@ class _NewItemState extends State<NewItem> {
   int _enterdQuantity = 1;
   Category _selectedCategory = categories[Categories.vegetables]!;
 
-  void _saveItem() {
+  void _saveItem() async {
     final bool isValid = _formKey.currentState!.validate();
     if (isValid) {
       _formKey.currentState!.save();
-      widget.addNewItem(GroceryItem(
-          id: '',
-          name: _enterdTitle,
-          quantity: _enterdQuantity,
-          category: _selectedCategory));
-      Navigator.pop(context);
-      print('$_enterdTitle+$_enterdQuantity');
-      print('$_selectedCategory');
+      final url = Uri.https(
+          'my-backend-8b100-default-rtdb.europe-west1.firebasedatabase.app',
+          'shopping-list.json');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': _enterdTitle,
+          'quantity': _enterdQuantity,
+          'category': _selectedCategory.categoryTitle,
+        }),
+      );
+      print(response.statusCode);
+      print(response.body);
+      if (!context.mounted) {
+        return;
+      } Navigator.of(context).pop();
     }
   }
+
 
   @override
   void dispose() {
@@ -152,7 +165,8 @@ class _NewItemState extends State<NewItem> {
                   ElevatedButton(
                     onPressed: _saveItem,
                     child: const Text('Submit'),
-                  )
+                  ),
+                  
                 ],
               )
             ],

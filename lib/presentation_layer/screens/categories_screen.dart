@@ -13,42 +13,41 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final List<GroceryItem> _groceryItems = [];
-  void _addItem() {
+  void _addItem()  {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>  NewItem(addNewItem:addGrocery ,),
+        builder: (context) =>const NewItem(
+         
+        ),
       ),
     );
+   
   }
 
-  void addGrocery(GroceryItem grocery) {
-    setState(() {
-      
-    _groceryItems.add(grocery);
-    });
-  }
-  void removeGrocery(GroceryItem grocery) {
-    _groceryItems.remove(grocery);
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          actions: [
-            IconButton(
-              onPressed: _addItem,
-              icon: const Icon(Icons.add),
-            ),
-          ],
-          title: const Text('Your Groceries'),
-          toolbarHeight: 85,
-        ),
-        body: ListView.builder(
+    Widget mainContent() {
+      if (_groceryItems.isEmpty) {
+        //fallback content
+        return const Center(
+          child: Text('No grocery items found!...'),
+        );
+      } else {
+        return ListView.builder(
           itemCount: _groceryItems.length,
-          itemBuilder: (context, index) {
-            return ListTile(
+          itemBuilder: (context, index) => Dismissible(
+            background: Container(
+              color: Colors.redAccent,
+            ),
+            key: ValueKey(_groceryItems[index].id),
+            onDismissed: (direction) {
+              setState(() {
+                _groceryItems.removeAt(index);
+              });
+            },
+            child: ListTile(
               subtitle: const Divider(
                 color: Colors.grey,
               ),
@@ -64,8 +63,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   fontSize: 16,
                 ),
               ),
-            );
-          },
-        ));
+            ),
+          ),
+        );
+      }
+    }
+
+    return Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              onPressed: _addItem,
+              icon: const Icon(Icons.add),
+            ),
+          ],
+          title: const Text('Your Groceries'),
+          toolbarHeight: 85,
+        ),
+        body: mainContent());
   }
 }
