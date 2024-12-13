@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shopping_list/data_layer/data/categories.dart';
+import 'package:shopping_list/data_layer/models/category_model.dart';
 import 'package:shopping_list/data_layer/models/grocery_item_model.dart';
 import 'package:shopping_list/presentation_layer/widgets/new_item.dart';
 
@@ -12,19 +17,56 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  final List<GroceryItem> _groceryItems = [];
-  void _addItem()  {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>const NewItem(
-         
-        ),
-      ),
-    );
+  List<GroceryItem> _groceryItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGroceries();
+  }
+
+  void _loadGroceries() async {
+    //feaching data
+    final url = Uri.https(
+        'my-backend-8b100-default-rtdb.europe-west1.firebasedatabase.app',
+        'shopping-list.json');
+
+    final response = await http.get(url);
+    // print(response.body);
+
+    //parsing data
+    final Map<String, dynamic> parsedGroceryItemsData =
+        json.decode(response.body);
+    //maping data
+     List<GroceryItem> loadedGroceryItems = [];
+
+ 
+      for (final parsedItem in parsedGroceryItemsData.entries) {
+      final Category category = categories.values.firstWhere(
+        (category) => category.categoryTitle == parsedItem.value['category'],
+      );
+
+      loadedGroceryItems.add(GroceryItem(
+          id: parsedItem.key,
+          name: parsedItem.value['name'],
+          quantity: parsedItem.value['quantity'],
+          category: category));
+    }
+    setState(() {
+      _groceryItems = loadedGroceryItems;
+    });
    
   }
 
+  void _addNewGrocery() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NewItem(),
+      ),
+    );
+    _loadGroceries();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +115,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         appBar: AppBar(
           actions: [
             IconButton(
-              onPressed: _addItem,
+              onPressed: _addNewGrocery,
               icon: const Icon(Icons.add),
             ),
           ],

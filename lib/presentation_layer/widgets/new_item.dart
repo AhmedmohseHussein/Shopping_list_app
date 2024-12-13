@@ -47,9 +47,9 @@ class _NewItemState extends State<NewItem> {
       );
       print(response.statusCode);
       print(response.body);
-      if (!context.mounted) {
-        return;
-      } Navigator.of(context).pop();
+      if (context.mounted) {
+       Navigator.of(context).pop();
+      } 
     }
   }
 
