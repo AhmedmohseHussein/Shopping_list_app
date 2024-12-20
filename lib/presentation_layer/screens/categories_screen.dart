@@ -18,11 +18,13 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   List<GroceryItem> _groceryItems = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadGroceries();
+    print('initstate');
   }
 
   void _loadGroceries() async {
@@ -38,10 +40,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     final Map<String, dynamic> parsedGroceryItemsData =
         json.decode(response.body);
     //maping data
-     List<GroceryItem> loadedGroceryItems = [];
+    List<GroceryItem> loadedGroceryItems = [];
 
- 
-      for (final parsedItem in parsedGroceryItemsData.entries) {
+    for (final parsedItem in parsedGroceryItemsData.entries) {
       final Category category = categories.values.firstWhere(
         (category) => category.categoryTitle == parsedItem.value['category'],
       );
@@ -54,27 +55,37 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
     setState(() {
       _groceryItems = loadedGroceryItems;
+      _isLoading = false;
     });
-   
   }
 
   void _addNewGrocery() async {
-    await Navigator.push(
+    final newGroceryItem = await Navigator.push<GroceryItem>(
       context,
       MaterialPageRoute(
         builder: (context) => const NewItem(),
       ),
     );
-    _loadGroceries();
+
+    if (newGroceryItem != null) {
+      setState(() {
+        _groceryItems.add(newGroceryItem);
+      
+      });
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget mainContent() {
-      if (_groceryItems.isEmpty) {
+  Widget mainContent() {
+      if (_groceryItems.isEmpty && !_isLoading) {
         //fallback content
         return const Center(
           child: Text('No grocery items found!...'),
+        );
+      } else 
+      
+      if (_isLoading) {
+        return const Center(
+          child: CircularProgressIndicator(),
         );
       } else {
         return ListView.builder(
@@ -110,6 +121,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         );
       }
     }
+
+  @override
+  Widget build(BuildContext context) {
+    print('build');
+    
 
     return Scaffold(
         appBar: AppBar(

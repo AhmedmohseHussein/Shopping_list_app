@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shopping_list/data_layer/data/categories.dart';
 import 'package:shopping_list/data_layer/models/category_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:shopping_list/data_layer/models/grocery_item_model.dart';
 
 extension ContextExtension on BuildContext {
   double get height => MediaQuery.sizeOf(this).height;
@@ -12,8 +13,6 @@ extension ContextExtension on BuildContext {
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
-
-  
 
   @override
   State<NewItem> createState() {
@@ -27,11 +26,15 @@ class _NewItemState extends State<NewItem> {
   String _enterdTitle = '';
   int _enterdQuantity = 1;
   Category _selectedCategory = categories[Categories.vegetables]!;
+  bool _isSending = false;
 
   void _saveItem() async {
     final bool isValid = _formKey.currentState!.validate();
     if (isValid) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https(
           'my-backend-8b100-default-rtdb.europe-west1.firebasedatabase.app',
           'shopping-list.json');
@@ -45,14 +48,19 @@ class _NewItemState extends State<NewItem> {
           'category': _selectedCategory.categoryTitle,
         }),
       );
-      print(response.statusCode);
-      print(response.body);
+
       if (context.mounted) {
-       Navigator.of(context).pop();
-      } 
+        final resData = json.decode(response.body); //def
+        Navigator.of(context).pop(
+          GroceryItem(
+              id: resData["name"],
+              name: _enterdTitle,
+              quantity: _enterdQuantity,
+              category: _selectedCategory),
+        );
+      }
     }
   }
-
 
   @override
   void dispose() {
@@ -73,6 +81,7 @@ class _NewItemState extends State<NewItem> {
           child: Column(
             children: [
               TextFormField(
+                textInputAction: TextInputAction.next,
                 maxLength: 50,
                 decoration: const InputDecoration(
                   label: Text('Title'),
@@ -158,15 +167,20 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                      onPressed: () {
-                        _formKey.currentState!.reset();
-                      },
+                      onPressed: _isSending
+                          ? null
+                          : () {
+                              _formKey.currentState!.reset();
+                            },
                       child: const Text('Reset')),
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: const Text('Submit'),
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending?const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(),
+                    ):const Text('Submit'),
                   ),
-                  
                 ],
               )
             ],
